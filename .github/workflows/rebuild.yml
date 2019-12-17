@@ -12,4 +12,4 @@ jobs:
     steps:
     - name: Call a webhook
       run: |
-        curl -X POST -d {} https://api.netlify.com/build_hooks/5d55d1a6ef28b9f0575cebd7
+        curl -X POST -d {} https://api.netlify.com/build_hooks/5df93745b0342d6b18947ea0

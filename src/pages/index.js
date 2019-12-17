@@ -42,12 +42,14 @@ const AllFeedbackQuery = gql`
 
 export default () => {
   // hooks
-  const { data, loading } = useQuery(AllFeedbackQuery)
-  const [updateFeedback, {}] = useMutation(UpdateFeedbackMutation)
+  const { data, loading } = useQuery(AllFeedbackQuery, { ssr: false })
+  const [updateFeedback, {}] = useMutation(UpdateFeedbackMutation, {
+    ssr: false,
+  })
   const [pivot, setPivot] = useState(`url`)
 
   // data transformations
-  if (loading) return "Loading"
+  if (loading) return <div>Loading</div>
   const feedback = data.feedback.map(rating => ({
     ...rating,
     url: rating.url

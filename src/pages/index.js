@@ -1,7 +1,8 @@
 import React, { useState } from "react"
-import { graphql } from "gatsby"
 import ReactTable from "react-table"
 import mean from "lodash.mean"
+import { useQuery, useMutation } from "@apollo/react-hooks"
+import gql from "graphql-tag"
 import {
   Alert,
   AlertIcon,
@@ -15,29 +16,46 @@ import {
 
 import "react-table/react-table.css"
 
-export const query = graphql`
-  {
-    gatsby {
-      feedback: getFeedback {
-        comment
-        url: originUrl
-        rating
-        date
-        status
-      }
+// mutation to update status from client
+const UpdateFeedbackMutation = gql`
+  mutation($input: FeedbackStatusInput!) {
+    updateFeedback(input: $input) {
+      id
+      status
     }
   }
 `
 
-export default ({ data }) => {
-  const feedback = data.gatsby.feedback.map(rating => ({
+// query to fetch all content dynamically
+const AllFeedbackQuery = gql`
+  query {
+    feedback: getFeedback {
+      id
+      comment
+      url: originUrl
+      rating
+      date
+      status
+    }
+  }
+`
+
+export default () => {
+  // hooks
+  const { data, loading } = useQuery(AllFeedbackQuery)
+  const [updateFeedback, {}] = useMutation(UpdateFeedbackMutation)
+  const [pivot, setPivot] = useState(`url`)
+
+  // data transformations
+  if (loading) return "Loading"
+  const feedback = data.feedback.map(rating => ({
     ...rating,
     url: rating.url
       .replace(/https:\/\/(www\.)?gatsbyjs.org/, "")
       .replace(/\/$/, ""),
     date: new Date(rating.date),
   }))
-  const [pivot, setPivot] = useState(`url`)
+
   function handleSelect(event) {
     if (event.target.value === `all`) {
       setPivot(undefined)
@@ -136,7 +154,21 @@ export default ({ data }) => {
                     <div style={{ display: `flex` }}>
                       <ButtonGroup spacing={2} mx={2}>
                         {isClosed ? (
-                          <Button size="xs" variantColor="blue" variant="ghost">
+                          <Button
+                            size="xs"
+                            variantColor="blue"
+                            variant="ghost"
+                            onClick={() => {
+                              updateFeedback({
+                                variables: {
+                                  input: {
+                                    id: d.id,
+                                    status: `OPEN`,
+                                  },
+                                },
+                              })
+                            }}
+                          >
                             Reopen
                           </Button>
                         ) : (
@@ -145,6 +177,16 @@ export default ({ data }) => {
                             leftIcon="check"
                             variantColor="gray"
                             variant="solid"
+                            onClick={() => {
+                              updateFeedback({
+                                variables: {
+                                  input: {
+                                    id: d.id,
+                                    status: `CLOSED`,
+                                  },
+                                },
+                              })
+                            }}
                           >
                             Close
                           </Button>

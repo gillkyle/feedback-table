@@ -1,35 +1,17 @@
 import React, { useState } from "react"
 import ReactTable from "react-table"
 import mean from "lodash.mean"
-import { useQuery, useMutation } from "@apollo/react-hooks"
+import { useQuery } from "@apollo/react-hooks"
 import gql from "graphql-tag"
-import {
-  Alert,
-  AlertIcon,
-  Box,
-  Button,
-  ButtonGroup,
-  Heading,
-  Select,
-  Text,
-} from "@chakra-ui/core"
+import { Alert, AlertIcon, Box, Heading, Select } from "@chakra-ui/core"
 
 import "react-table/react-table.css"
-
-// mutation to update status from client
-const UpdateFeedbackMutation = gql`
-  mutation($input: FeedbackStatusInput!) {
-    updateFeedback(input: $input) {
-      id
-      status
-    }
-  }
-`
+import FeedbackStatus from "../components/feedback-status"
 
 // query to fetch all content dynamically
 const AllFeedbackQuery = gql`
   query {
-    feedback: getFeedback {
+    allFeedback: getFeedback {
       id
       comment
       url: originUrl
@@ -43,14 +25,11 @@ const AllFeedbackQuery = gql`
 export default () => {
   // hooks
   const { data, loading } = useQuery(AllFeedbackQuery, { ssr: false })
-  const [updateFeedback, {}] = useMutation(UpdateFeedbackMutation, {
-    ssr: false,
-  })
   const [pivot, setPivot] = useState(`url`)
 
   // data transformations
-  if (loading) return <div>Loading</div>
-  const feedback = data.feedback.map(rating => ({
+  if (!!loading) return <div>Loading</div>
+  const allFeedback = data.allFeedback.map(rating => ({
     ...rating,
     url: rating.url
       .replace(/https:\/\/(www\.)?gatsbyjs.org/, "")
@@ -65,6 +44,8 @@ export default () => {
       setPivot(event.target.value)
     }
   }
+
+  const dataRef = allFeedback
 
   return (
     <>
@@ -90,7 +71,8 @@ export default () => {
       </Alert>
       <ReactTable
         key={pivot}
-        data={feedback}
+        data={dataRef}
+        freezeWhenExpanded={true}
         columns={[
           {
             Header: "Feedback",
@@ -149,65 +131,7 @@ export default () => {
               {
                 Header: "Status",
                 id: "status",
-                accessor: d => {
-                  // this could make sense as a state machine if more statuses are added
-                  const isClosed = d.status === `CLOSED`
-                  return (
-                    <div style={{ display: `flex` }}>
-                      <ButtonGroup spacing={2} mx={2}>
-                        {isClosed ? (
-                          <Button
-                            size="xs"
-                            variantColor="blue"
-                            variant="ghost"
-                            onClick={() => {
-                              updateFeedback({
-                                variables: {
-                                  input: {
-                                    id: d.id,
-                                    status: `OPEN`,
-                                  },
-                                },
-                              })
-                            }}
-                          >
-                            Reopen
-                          </Button>
-                        ) : (
-                          <Button
-                            size="xs"
-                            leftIcon="check"
-                            variantColor="gray"
-                            variant="solid"
-                            onClick={() => {
-                              updateFeedback({
-                                variables: {
-                                  input: {
-                                    id: d.id,
-                                    status: `CLOSED`,
-                                  },
-                                },
-                              })
-                            }}
-                          >
-                            Close
-                          </Button>
-                        )}
-                      </ButtonGroup>
-                      <Text color={isClosed ? "gray.300" : "gray.600"}>
-                        {isClosed ? (
-                          <Text as="i" fontSize="sm">
-                            Closed
-                          </Text>
-                        ) : (
-                          <Text as="i" fontSize="sm">
-                            Open
-                          </Text>
-                        )}
-                      </Text>
-                    </div>
-                  )
-                },
+                accessor: d => <FeedbackStatus id={d.id} />,
                 aggregate: () => "",
                 filterable: false,
               },

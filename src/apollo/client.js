@@ -2,6 +2,6 @@ import ApolloClient from "apollo-boost"
 import fetch from "isomorphic-fetch"
 
 export const client = new ApolloClient({
-  uri: "http://api.gatsbyjs.org/public",
+  uri: process.env.GATSBY_APOLLO_URL,
   fetch,
 })

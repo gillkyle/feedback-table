@@ -1,7 +1,17 @@
-import React from "react"
+import React, { useState } from "react"
 import { graphql } from "gatsby"
 import ReactTable from "react-table"
 import mean from "lodash.mean"
+import {
+  Alert,
+  AlertIcon,
+  Box,
+  Button,
+  ButtonGroup,
+  Heading,
+  Select,
+  Text,
+} from "@chakra-ui/core"
 
 import "react-table/react-table.css"
 
@@ -13,6 +23,7 @@ export const query = graphql`
         url: originUrl
         rating
         date
+        status
       }
     }
   }
@@ -26,10 +37,39 @@ export default ({ data }) => {
       .replace(/\/$/, ""),
     date: new Date(rating.date),
   }))
+  const [pivot, setPivot] = useState(`url`)
+  function handleSelect(event) {
+    if (event.target.value === `all`) {
+      setPivot(undefined)
+    } else {
+      setPivot(event.target.value)
+    }
+  }
+
   return (
     <>
-      <h1>Docs Feedback</h1>
+      <Heading as="h1" p={4}>
+        Docs Feedback
+      </Heading>
+      <Box style={{ display: `flex`, alignItems: `center` }} p={4}>
+        <div>Pivot table by:</div>
+        <Select
+          placeholder=""
+          size="sm"
+          w="200px"
+          ml="10px"
+          onChange={e => handleSelect(e)}
+        >
+          <option value={`url`}>Url</option>
+          <option value={`all`}>All</option>
+        </Select>
+      </Box>
+      <Alert status="info" mb={2}>
+        <AlertIcon />
+        Hold shift and click on header names to sort by multiple properties
+      </Alert>
       <ReactTable
+        key={pivot}
         data={feedback}
         columns={[
           {
@@ -50,7 +90,7 @@ export default ({ data }) => {
                 aggregate: vals => mean(vals),
                 Aggregated: row => <span>{row.value.toFixed(1)} (avg)</span>,
                 width: 75,
-                filterable: false,
+                filterable: true,
               },
               {
                 Header: "Comment",
@@ -86,10 +126,51 @@ export default ({ data }) => {
                 sortMethod: (a, b) =>
                   new Date(b).getTime() - new Date(a).getTime(),
               },
+              {
+                Header: "Status",
+                id: "status",
+                accessor: d => {
+                  // this could make sense as a state machine if more statuses are added
+                  const isClosed = d.status === `CLOSED`
+                  return (
+                    <div style={{ display: `flex` }}>
+                      <ButtonGroup spacing={2} mx={2}>
+                        {isClosed ? (
+                          <Button size="xs" variantColor="blue" variant="ghost">
+                            Reopen
+                          </Button>
+                        ) : (
+                          <Button
+                            size="xs"
+                            leftIcon="check"
+                            variantColor="gray"
+                            variant="solid"
+                          >
+                            Close
+                          </Button>
+                        )}
+                      </ButtonGroup>
+                      <Text color={isClosed ? "gray.300" : "gray.600"}>
+                        {isClosed ? (
+                          <Text as="i" fontSize="sm">
+                            Closed
+                          </Text>
+                        ) : (
+                          <Text as="i" fontSize="sm">
+                            Open
+                          </Text>
+                        )}
+                      </Text>
+                    </div>
+                  )
+                },
+                aggregate: () => "",
+                filterable: false,
+              },
             ],
           },
         ]}
-        pivotBy={["url"]}
+        pivotBy={pivot ? [pivot] : undefined}
         className="-striped -highlight"
         filterable
       />

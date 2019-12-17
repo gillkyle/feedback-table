@@ -3,10 +3,11 @@ module.exports = {
     {
       resolve: "gatsby-source-graphql",
       options: {
-        url: "https://api.gatsbyjs.org/public",
+        url: "http://localhost:3000/public", // change back to api.gatsbyjs.org for PROD
         typeName: "GatsbyFeedback",
         fieldName: "gatsby",
       },
     },
+    `gatsby-plugin-chakra-ui`,
   ],
 }

@@ -13,30 +13,29 @@ const UpdateFeedbackMutation = gql`
   }
 `
 
-// query to fetch all content dynamically
-const FeedbackQuery = gql`
-  query($id: ID!) {
-    getFeedbackById(id: $id) {
-      id
-      status
-    }
-  }
-`
-
-const FeedbackStatus = ({ id }) => {
-  const { data, loading } = useQuery(FeedbackQuery, {
-    variables: { id: id },
-    ssr: false,
-  })
+// this could make sense using a state machine if more statuses are added
+const FeedbackStatus = ({ id, status, client }) => {
+  const loading = false
   const [updateFeedback, { data: mutationResult }] = useMutation(
     UpdateFeedbackMutation,
     {
       ssr: false,
     }
   )
+  // reads data fetched in the index page from the apollo cache to speed things
+  // up and allow observables to update status once the mutation returns a result
+  const feedbackFromCache = client.readFragment({
+    id: `Feedback:${id}`,
+    fragment: gql`
+      fragment feedback on Feedback {
+        id
+        status
+      }
+    `,
+  })
 
-  // this could make sense as a state machine if more statuses are added
-  const isClosed = !loading && data.getFeedbackById.status === `CLOSED`
+  const isClosed = feedbackFromCache.status === `CLOSED`
+
   return (
     <div style={{ display: `flex` }}>
       <ButtonGroup spacing={2} mx={2}>
@@ -66,6 +65,7 @@ const FeedbackStatus = ({ id }) => {
             leftIcon="check"
             variantColor="gray"
             variant="solid"
+            disabled={loading}
             onClick={() => {
               console.log(`Closing ID: ${id}`)
               updateFeedback({

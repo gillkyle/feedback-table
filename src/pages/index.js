@@ -24,7 +24,7 @@ const AllFeedbackQuery = gql`
 
 export default () => {
   // hooks
-  const { data, loading } = useQuery(AllFeedbackQuery, { ssr: false })
+  const { data, loading, client } = useQuery(AllFeedbackQuery, { ssr: false })
   const [pivot, setPivot] = useState(`url`)
 
   // data transformations
@@ -131,7 +131,9 @@ export default () => {
               {
                 Header: "Status",
                 id: "status",
-                accessor: d => <FeedbackStatus id={d.id} />,
+                accessor: d => (
+                  <FeedbackStatus id={d.id} status={d.status} client={client} />
+                ),
                 aggregate: () => "",
                 filterable: false,
               },

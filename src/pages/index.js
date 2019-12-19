@@ -45,8 +45,6 @@ export default () => {
     }
   }
 
-  const dataRef = allFeedback
-
   return (
     <>
       <Heading as="h1" p={4}>
@@ -71,7 +69,7 @@ export default () => {
       </Alert>
       <ReactTable
         key={pivot}
-        data={dataRef}
+        data={allFeedback}
         freezeWhenExpanded={true}
         columns={[
           {

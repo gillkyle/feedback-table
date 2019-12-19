@@ -1,5 +1,5 @@
 import React from "react"
-import { useQuery, useMutation } from "@apollo/react-hooks"
+import { useMutation } from "@apollo/react-hooks"
 import { Button, ButtonGroup, Text } from "@chakra-ui/core"
 import gql from "graphql-tag"
 
@@ -14,7 +14,7 @@ const UpdateFeedbackMutation = gql`
 `
 
 // this could make sense using a state machine if more statuses are added
-const FeedbackStatus = ({ id, status, client }) => {
+const FeedbackStatus = ({ id, client }) => {
   const loading = false
   const [updateFeedback, { data: mutationResult }] = useMutation(
     UpdateFeedbackMutation,

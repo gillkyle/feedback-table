@@ -8,7 +8,6 @@ import { Alert, AlertIcon, Box, Heading, Select } from "@chakra-ui/core"
 import "react-table/react-table.css"
 import FeedbackStatus from "../components/feedback-status"
 
-// query to fetch all content dynamically
 const AllFeedbackQuery = gql`
   query {
     allFeedback: getFeedback {
@@ -24,11 +23,25 @@ const AllFeedbackQuery = gql`
 
 export default () => {
   // hooks
-  const { data, loading, client } = useQuery(AllFeedbackQuery, { ssr: false })
+  const { data, loading, client, error } = useQuery(AllFeedbackQuery, {
+    ssr: false,
+  })
   const [pivot, setPivot] = useState(`url`)
 
-  // data transformations
+  // handle loading and error states
   if (!!loading) return <div>Loading</div>
+  if (error)
+    return (
+      <>
+        Error loading data from api.gatsbyjs.org:
+        <Alert status="error">
+          <AlertIcon />
+          {JSON.stringify(error)}
+        </Alert>
+      </>
+    )
+
+  // data transformation
   const allFeedback = data.allFeedback.map(rating => ({
     ...rating,
     url: rating.url
@@ -37,6 +50,7 @@ export default () => {
     date: new Date(rating.date),
   }))
 
+  // handlers
   function handleSelect(event) {
     if (event.target.value === `all`) {
       setPivot(undefined)
